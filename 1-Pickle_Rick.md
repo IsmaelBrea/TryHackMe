@@ -3,7 +3,7 @@
 
 Dificultad -> Fácil
 
-Enlace a la máquina -> [TryHackMe]([https://dockerlabs.es/](https://tryhackme.com/room/picklerick))
+Enlace a la máquina -> [Pickle Rick](https://tryhackme.com/room/picklerick)
 
 El objetivo de la máquina es encontrar 3 flags, que son 3 ingredientes.
 
