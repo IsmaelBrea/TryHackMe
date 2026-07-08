@@ -3,41 +3,62 @@
 
 Dificultad -> Fácil
 
-Enlace a la máquina -> [Dockerlabs](https://dockerlabs.es/)
+Enlace a la máquina -> [TryHackMe]([https://dockerlabs.es/](https://tryhackme.com/room/picklerick))
+
+El objetivo de la máquina es encontrar 3 flags, que son 3 ingredientes.
 
 ## Despliegue del laboratorio
- pra 
+
+Desplegar VPN y comprobar la interfaz tun0 con `ip a`.
 
 
 ## Reconocimiento
 
-Comenzamos realizando un escaneo general con **nmap** sobre la IP de la máquina víctima para ver que puertos tiene abiertos.
-
-```shell
-nmap -p- --open -sv --min-rate 5000 -vvv -n -Pn 172.19.0.2 
-________________________________________________
-PORT   STATE SERVICE VERSION
-22/tcp open  ssh     OpenSSH 9.2p1 Debian 2+deb12u2 (protocol 2.0)
-| ssh-hostkey: 
-|   256 19a11a42fa3a9d9a0fea917f7edba3c7 (ECDSA)
-|_  256 a6fdcf45a695052c5810738d39572bff (ED25519)
-80/tcp open  http    Apache httpd 2.4.57 ((Debian))
-|_http-server-header: Apache/2.4.57 (Debian)
-|_http-title: Apache2 Debian Default Page: It works
-MAC Address: 02:42:AC:11:00:02 (Unknown)
-***
+Tenemos la Ip de la máquina víctima. El primer paso realizado fue un escaneo completo de nmap para ver puertos y servicios:
+```bash
+nmap -sS -sV -p- -min-rate 5000 -vvv 10.130.133.241
 ```
 
-Podemos ver que tenemos dos puertos abiertos que son el 22 (ssh) y el 80(http). El puerto 22 siempre puede ser importante para poder hacer fuerza bruta si sabemos un usuario y contraseña. Como el http está abierto, vamos a acceder a la IP en el buscador. Al acceder podemos ver que tiene una plantilla de Apache.
-
-![Plantilla](/images/plantilla_apache.png)
+Es un escaneo SYN scan (-sS), es decir, no llega a completar el handshake aunque es indiferente puesto que es un laboratorio. Detectamos versiones de los servicios con -sV y con `--min-rate 5000`  aumenta la velocidad enviando al menos 5000 paquetes por segundo.
 
 
-## Fuzzing
+Podemos comprobar que están abiertos los puertos 22 (ssh) h 80 (http):
 
-Para poder obtener información acerca de la página que tienen alojada en la IP, vamos a usar fuzzing, que es una técnica que consiste en enviar datos aleatorios, inesperados o mal formados a un programa, servicio o aplicación para ver cómo responde. El objetivo principal es detectar errores, vulnerabilidades o fallos de seguridad.
+<img width="849" height="78" alt="imagen" src="https://github.com/user-attachments/assets/582d4220-26f3-4f10-b2cc-15bb61007974" />
 
-Para ello vamos a utilizar la herrmaienta de fuzzing web gobuster para encontrar archivos o directorios web dentro de la página:
+<br>
+
+En este punto ya tenemos dos vectores de ataque por donde podemos empezar. 
+
+En primer caso es recomendable ver que contiene el puerto 80 así que lo pegamos con su IP en el navegador para ver que contiene. En este caso no funciona, no lleva a ningún lado. Aun así probamos un curl para ver que nos devuelve:
+```bash
+curl http://10.130.133.241
+```
+
+Esto sí que funciona y nos devuelve un código HTML que contiene algún dato interesante. Lo más destacado es un nombre al final: 
+```html
+Username: R1ckRul3s
+```
+ y algún dato como que tenemos que ayudar a Morty a encontrar ingredientes para que deje de ser un pepinillo.
+
+## Enumeración Web - Fuzzing
+
+A partir de lo anterior, tenemos varias opciones por donde tirar. Tenemos ya un nombre de usuario con el que podemos probar varias cosas. Lo primero que hice al obtenerlo y teniendo en cuenta que teníamos el puerto 22 abierto fue prpbar fuerza bruta con hydra para ver si podía obtener alguna contraseña con la que acceder al SSH. Para ello usé:
+```bash
+hydra -l R1ckRul3s - P /usr/share/wordlists/rockyou.txt ssh://10.130.133.241
+```
+
+Sin embargo obtuve lo siguiente: does not support password authentication. Lo que indica que ssh no tiene contraseña  y por tanto no podemos usar hydra. Esto lo confirmarmos con:
+```bash
+ssh -v R1ckRul3s@10.130.133.241
+```
+
+>  Authentications that can continue: publickey
+
+Por tanto Hydra no servía.
+
+`-l` -> login (usuario a probar)
+`-P` -> password list (Indica un archivo de contraseñas)
 
  ### Gobuster
 He probado distintas combinaciones en gobuster para ver si encontraba algo y he encontrado un php con el siguiente comando:
@@ -60,6 +81,7 @@ En conjunto, Gobuster intenta encontrar archivos o directorios en la URL o IP qu
 Al acceder a /secret.php podemos ver lo siguiente:
 
 ![PHP](/images/secret_php.png)
+
 
 ## Explotación
 Solo tenemos un vector de ataque con la información que tenemos. Sabemos que está abierto el puerto 22 y que hay un usuario llamada Mario. Por tanto vamos a realizar fuerza bruta a este puerto utilizando **hydra**.
