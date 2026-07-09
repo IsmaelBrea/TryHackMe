@@ -3,7 +3,7 @@
 
 Dificultad -> Muy Fácil
 
-Enlace a la máquina -> [Pickle Rick](https://tryhackme.com/room/picklerick)
+Enlace a la máquina -> [Corridor]([https://tryhackme.com/room/picklerick](https://tryhackme.com/room/corridor))
 
 El objetivo de la máquina es encontrar 1 flag.
 
