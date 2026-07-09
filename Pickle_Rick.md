@@ -1,9 +1,9 @@
 
 # Máquina Pickle Rick 
 
-Dificultad -> Fácil
+Dificultad -> Muy Fácil
 
-Enlace a la máquina -> [Neighbour]([(https://tryhackme.com/room/neighbour/)])
+Enlace a la máquina -> [Neighbour](https://tryhackme.com/room/neighbour/)
 
 El objetivo de la máquina es encontrar 1 flag.
 
