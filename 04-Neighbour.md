@@ -1,5 +1,5 @@
 
-# Máquina Pickle Rick 
+# Máquina Neighbour
 
 Dificultad -> Muy Fácil
 
