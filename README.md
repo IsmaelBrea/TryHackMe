@@ -11,3 +11,4 @@ sudo openvpn name.ovpn
 
 1. Pickle Rick - nivel fácil (escaneo, eumeración de puertos y enumeración web y uso de comandos Linux).
 2. Basic Pentesting - nivel fácil (fuerza bruta, cracking de hashes, enumeración de servicios, enumeración linux)
+3. Corridor - nivel muy fácil (IDOR)
