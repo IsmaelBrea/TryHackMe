@@ -13,3 +13,4 @@ sudo openvpn name.ovpn
 2. Basic Pentesting - nivel fácil (fuerza bruta, cracking de hashes, enumeración de servicios, enumeración linux)
 3. Corridor - nivel muy fácil (IDOR)
 4. Neighbour - nivel muy fácil (IDOR)
+5. Lo-Fi - nivel fácil (Path Transvesal y File Inclusion)
