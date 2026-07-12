@@ -23,7 +23,7 @@ En este desafío, nos saltamos el escaneo Nmap. Dado que la descripción de la h
 
 Tendremos que usar 2 técnicas:
 
-- **LF IPath Traversal:**
+- **LFI Path Traversal:**
 
 Es una vulnerabilidad que permite acceder a archivos o directorios fuera de la carpeta permitida utilizando rutas como ../.
 
