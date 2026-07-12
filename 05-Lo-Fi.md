@@ -70,5 +70,5 @@ La flag se puede encontrar en:
 
 http://MACHINE_IP/?page=../../../flag.txt
 
- Máquina completada: Pickle Rick ✅
+ Máquina completada: Lo-Fi ✅
 
