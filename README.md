@@ -14,3 +14,4 @@ sudo openvpn name.ovpn
 3. Corridor - nivel muy fácil (IDOR)
 4. Neighbour - nivel muy fácil (IDOR)
 5. Lo-Fi - nivel fácil (Path Transvesal y File Inclusion)
+6. OhSINT - nivel fácil (OSINT básico, análisis de metadatos y recopilación de información de fuentes públicas)
