@@ -15,3 +15,4 @@ sudo openvpn name.ovpn
 4. Neighbour - nivel muy fácil (IDOR)
 5. Lo-Fi - nivel fácil (Path Transvesal y File Inclusion)
 6. OhSINT - nivel fácil (OSINT básico, análisis de metadatos y recopilación de información de fuentes públicas)
+7. Blue -  nivel fácil (Windows, SMB, detección de vulnerabilidades, explotación de MS17-010 (EternalBlue) con Metasploit y post-explotación básica con Meterpreter).
